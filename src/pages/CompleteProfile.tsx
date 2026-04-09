@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Camera } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const options = {
   gender: ["Masculino", "Feminino"],
@@ -13,14 +16,34 @@ const options = {
 
 const CompleteProfile = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [username, setUsername] = useState("");
   const [gender, setGender] = useState("");
   const [hand, setHand] = useState("");
   const [side, setSide] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleComplete = (e: React.FormEvent) => {
+  const handleComplete = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/home");
+    if (!user) return;
+
+    setLoading(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        username,
+        gender,
+        preferred_hand: hand,
+        preferred_side: side,
+      })
+      .eq("user_id", user.id);
+
+    setLoading(false);
+    if (error) {
+      toast.error("Erro ao guardar perfil: " + error.message);
+    } else {
+      navigate("/home");
+    }
   };
 
   const OptionGroup = ({
@@ -75,15 +98,15 @@ const CompleteProfile = () => {
 
           <div className="space-y-2">
             <Label htmlFor="username">Username</Label>
-            <Input id="username" placeholder="@username" value={username} onChange={(e) => setUsername(e.target.value)} className="bg-secondary border-border" />
+            <Input id="username" placeholder="@username" value={username} onChange={(e) => setUsername(e.target.value)} className="bg-secondary border-border" required />
           </div>
 
           <OptionGroup label="Género" value={gender} onChange={setGender} items={options.gender} />
           <OptionGroup label="Mão preferida" value={hand} onChange={setHand} items={options.hand} />
           <OptionGroup label="Lado do campo" value={side} onChange={setSide} items={options.side} />
 
-          <Button type="submit" className="w-full font-bold text-sm h-11 glow-primary">
-            Começar a jogar
+          <Button type="submit" className="w-full font-bold text-sm h-11 glow-primary" disabled={loading}>
+            {loading ? "A guardar..." : "Começar a jogar"}
           </Button>
         </form>
       </div>

@@ -4,16 +4,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const Register = () => {
   const navigate = useNavigate();
+  const { signUp } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/complete-profile");
+    if (password.length < 6) {
+      toast.error("A password deve ter pelo menos 6 caracteres");
+      return;
+    }
+    setLoading(true);
+    const { error } = await signUp(email, password, name);
+    setLoading(false);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Conta criada! Verifica o teu email para confirmar.");
+      navigate("/login");
+    }
   };
 
   return (
@@ -31,18 +47,18 @@ const Register = () => {
         <form onSubmit={handleRegister} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Nome</Label>
-            <Input id="name" placeholder="O teu nome" value={name} onChange={(e) => setName(e.target.value)} className="bg-secondary border-border" />
+            <Input id="name" placeholder="O teu nome" value={name} onChange={(e) => setName(e.target.value)} className="bg-secondary border-border" required />
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="o-teu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-secondary border-border" />
+            <Input id="email" type="email" placeholder="o-teu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-secondary border-border" required />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="bg-secondary border-border" />
+            <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="bg-secondary border-border" required />
           </div>
-          <Button type="submit" className="w-full font-bold text-sm h-11 glow-primary">
-            Criar conta
+          <Button type="submit" className="w-full font-bold text-sm h-11 glow-primary" disabled={loading}>
+            {loading ? "A criar..." : "Criar conta"}
           </Button>
         </form>
 

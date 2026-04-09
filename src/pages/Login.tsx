@@ -3,16 +3,26 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: integrate with backend
-    navigate("/home");
+    setLoading(true);
+    const { error } = await signIn(email, password);
+    setLoading(false);
+    if (error) {
+      toast.error("Email ou password incorretos");
+    } else {
+      navigate("/home");
+    }
   };
 
   return (
@@ -33,6 +43,7 @@ const Login = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="bg-secondary border-border"
+              required
             />
           </div>
           <div className="space-y-2">
@@ -44,10 +55,11 @@ const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="bg-secondary border-border"
+              required
             />
           </div>
-          <Button type="submit" className="w-full font-bold text-sm h-11 glow-primary">
-            Entrar
+          <Button type="submit" className="w-full font-bold text-sm h-11 glow-primary" disabled={loading}>
+            {loading ? "A entrar..." : "Entrar"}
           </Button>
         </form>
 
