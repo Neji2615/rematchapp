@@ -27,8 +27,8 @@ const Register = () => {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Conta criada! Verifica o teu email para confirmar.");
-      navigate("/login");
+      toast.success("Conta criada com sucesso!");
+      navigate("/complete-profile");
     }
   };
 

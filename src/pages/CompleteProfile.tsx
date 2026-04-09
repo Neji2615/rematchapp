@@ -16,7 +16,7 @@ const options = {
 
 const CompleteProfile = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const [username, setUsername] = useState("");
   const [gender, setGender] = useState("");
   const [hand, setHand] = useState("");
@@ -27,23 +27,40 @@ const CompleteProfile = () => {
     e.preventDefault();
     if (!user) return;
 
+    if (!gender || !hand || !side) {
+      toast.error("Por favor preenche todos os campos");
+      return;
+    }
+
+    if (username.length < 3) {
+      toast.error("O username deve ter pelo menos 3 caracteres");
+      return;
+    }
+
     setLoading(true);
     const { error } = await supabase
       .from("profiles")
       .update({
-        username,
+        username: username.startsWith("@") ? username.slice(1) : username,
         gender,
         preferred_hand: hand,
         preferred_side: side,
       })
       .eq("user_id", user.id);
 
-    setLoading(false);
     if (error) {
-      toast.error("Erro ao guardar perfil: " + error.message);
-    } else {
-      navigate("/home");
+      setLoading(false);
+      if (error.message.includes("unique")) {
+        toast.error("Este username ja esta a ser usado");
+      } else {
+        toast.error("Erro ao guardar perfil: " + error.message);
+      }
+      return;
     }
+
+    await refreshProfile();
+    setLoading(false);
+    navigate("/home");
   };
 
   const OptionGroup = ({
