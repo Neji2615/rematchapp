@@ -1,6 +1,8 @@
-import { ArrowLeft, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown, Minus, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 
 const mockProfile = {
   name: "Jogador",
@@ -29,7 +31,13 @@ const divisionHistory = [
 ];
 
 const Profile = () => {
+  const { signOut } = useAuth();
   const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/login");
+  };
 
   return (
     <div className="min-h-screen pb-24 animate-fade-in">
@@ -111,6 +119,13 @@ const Profile = () => {
               </div>
             ))}
           </div>
+        </div>
+        {/* Logout */}
+        <div className="mt-6">
+          <Button variant="outline" className="w-full gap-2 border-destructive/30 text-destructive hover:bg-destructive/10" onClick={handleLogout}>
+            <LogOut size={18} />
+            Terminar sessão
+          </Button>
         </div>
       </div>
 
