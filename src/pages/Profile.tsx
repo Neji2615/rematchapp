@@ -120,6 +120,13 @@ const Profile = () => {
             ))}
           </div>
         </div>
+        {/* Logout */}
+        <div className="mt-6">
+          <Button variant="outline" className="w-full gap-2 border-destructive/30 text-destructive hover:bg-destructive/10" onClick={handleLogout}>
+            <LogOut size={18} />
+            Terminar sessão
+          </Button>
+        </div>
       </div>
 
       <BottomNav />
