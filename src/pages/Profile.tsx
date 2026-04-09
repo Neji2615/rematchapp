@@ -31,7 +31,13 @@ const divisionHistory = [
 ];
 
 const Profile = () => {
+  const { signOut } = useAuth();
   const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/login");
+  };
 
   return (
     <div className="min-h-screen pb-24 animate-fade-in">
