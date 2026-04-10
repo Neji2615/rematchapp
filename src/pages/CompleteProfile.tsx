@@ -73,17 +73,15 @@ const CompleteProfile = () => {
       avatarUrl = urlData.publicUrl;
     }
 
-    const updateData: Record<string, any> = {
-      username: username.startsWith("@") ? username.slice(1) : username,
-      gender,
-      preferred_hand: hand,
-      preferred_side: side,
-    };
-    if (avatarUrl) updateData.avatar_url = avatarUrl;
-
     const { error } = await supabase
       .from("profiles")
-      .update(updateData)
+      .update({
+        username: username.startsWith("@") ? username.slice(1) : username,
+        gender,
+        preferred_hand: hand,
+        preferred_side: side,
+        ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
+      })
       .eq("user_id", user.id);
 
     if (error) {
