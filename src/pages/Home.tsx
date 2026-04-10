@@ -2,6 +2,8 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Plus, Swords, TrendingUp, Medal } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
+import AvatarDisplay from "@/components/AvatarDisplay";
+import MatchConfirmation from "@/components/MatchConfirmation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +23,7 @@ const Home = () => {
 
       const { data } = await supabase
         .from("rankings")
-        .select("points, position, profiles(full_name, username, user_id)")
+        .select("points, position, profiles(full_name, username, user_id, avatar_url)")
         .eq("division_id", profile!.division_id!)
         .eq("week_start", weekStartStr)
         .order("points", { ascending: false })
@@ -44,20 +46,64 @@ const Home = () => {
     },
   });
 
+  // Pending match confirmations
+  const { data: pendingMatches } = useQuery({
+    queryKey: ["pending-confirmations", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data: matches } = await supabase
+        .from("matches")
+        .select("*")
+        .or(`player1_id.eq.${user!.id},player2_id.eq.${user!.id},player3_id.eq.${user!.id},player4_id.eq.${user!.id}`)
+        .order("created_at", { ascending: false });
+
+      if (!matches) return [];
+
+      // Filter matches not fully confirmed and where user hasn't confirmed yet
+      const pending = matches.filter((m) => {
+        const confirmed = m.confirmed_by || [];
+        return confirmed.length < 4 && !confirmed.includes(user!.id);
+      });
+
+      if (pending.length === 0) return [];
+
+      // Fetch player names for these matches
+      const playerIds = new Set<string>();
+      pending.forEach((m) => {
+        [m.player1_id, m.player2_id, m.player3_id, m.player4_id].forEach((id) => playerIds.add(id));
+      });
+
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, username")
+        .in("user_id", Array.from(playerIds));
+
+      const nameMap: Record<string, string> = {};
+      profiles?.forEach((p) => {
+        nameMap[p.user_id] = p.user_id === user!.id ? "Tu" : (p.full_name?.split(" ")[0] || p.username || "Jogador");
+      });
+
+      return pending.map((m) => ({ match: m, nameMap }));
+    },
+  });
+
   const displayName = profile?.full_name?.split(" ")[0] || profile?.username || "Jogador";
 
   return (
     <div className="min-h-screen pb-24 animate-fade-in">
-      <div className="px-6 pt-12 pb-6">
-        <p className="text-muted-foreground text-sm">Ola,</p>
-        <h1 className="text-2xl font-bold">{displayName}</h1>
+      <div className="px-6 pt-12 pb-6 flex items-center gap-3">
+        <AvatarDisplay avatarUrl={profile?.avatar_url} name={displayName} size="md" />
+        <div>
+          <p className="text-muted-foreground text-sm">Olá,</p>
+          <h1 className="text-2xl font-bold">{displayName}</h1>
+        </div>
       </div>
 
       <div className="px-6 mb-6">
         <div className="glass-card p-5 glow-primary">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Divisao atual</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Divisão atual</p>
               <p className="text-3xl font-black text-gradient mt-1">
                 {divisionData ? divisionData.name : "Bronze"}
               </p>
@@ -72,6 +118,18 @@ const Home = () => {
           </div>
         </div>
       </div>
+
+      {/* Pending confirmations */}
+      {pendingMatches && pendingMatches.length > 0 && (
+        <div className="px-6 mb-6">
+          <h2 className="font-bold text-base mb-3">A aguardar confirmação</h2>
+          <div className="space-y-3">
+            {pendingMatches.map(({ match, nameMap }) => (
+              <MatchConfirmation key={match.id} match={match} playerNames={nameMap} />
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="px-6 mb-6 flex gap-3">
         <Button
@@ -110,9 +168,12 @@ const Home = () => {
                   <span className={`w-7 text-sm font-bold ${idx < 3 ? "text-primary" : "text-muted-foreground"}`}>
                     {idx + 1}
                   </span>
-                  <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs font-bold mr-3">
-                    {name.charAt(0).toUpperCase()}
-                  </div>
+                  <AvatarDisplay
+                    avatarUrl={entry.profiles?.avatar_url}
+                    name={name}
+                    size="sm"
+                    className="mr-3"
+                  />
                   <span className={`flex-1 text-sm font-medium ${isCurrentUser ? "text-primary" : ""}`}>
                     {name}
                   </span>

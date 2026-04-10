@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ArrowLeft, ChevronDown, ChevronUp, Minus, Crown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
+import AvatarDisplay from "@/components/AvatarDisplay";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -33,14 +34,13 @@ const Rankings = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("user_id, full_name, username, division_id, total_points")
+        .select("user_id, full_name, username, division_id, total_points, avatar_url")
         .not("username", "is", null)
         .order("total_points", { ascending: false });
       return data || [];
     },
   });
 
-  // Auto-expand user's division
   const userDivision = divisions?.find((d) =>
     allProfiles?.some((p) => p.user_id === user?.id && p.division_id === d.id)
   );
@@ -67,6 +67,7 @@ const Rankings = () => {
               points: p.total_points,
               isCurrentUser: p.user_id === user?.id,
               trend: "same" as string,
+              avatarUrl: p.avatar_url,
             })) || [];
 
           return (
@@ -103,9 +104,12 @@ const Rankings = () => {
                           <span className={`w-7 text-sm font-bold ${player.pos <= 3 ? "text-primary" : "text-muted-foreground"}`}>
                             {player.pos}
                           </span>
-                          <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs font-bold mr-3">
-                            {player.name.charAt(0)}
-                          </div>
+                          <AvatarDisplay
+                            avatarUrl={player.avatarUrl}
+                            name={player.name}
+                            size="sm"
+                            className="mr-3"
+                          />
                           <span className={`flex-1 text-sm font-medium ${player.isCurrentUser ? "text-primary" : ""}`}>
                             {player.name}
                           </span>

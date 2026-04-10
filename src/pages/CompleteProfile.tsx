@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,20 @@ const CompleteProfile = () => {
   const [hand, setHand] = useState("");
   const [side, setSide] = useState("");
   const [loading, setLoading] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 2MB");
+      return;
+    }
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  };
 
   const handleComplete = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,6 +52,27 @@ const CompleteProfile = () => {
     }
 
     setLoading(true);
+
+    let avatarUrl: string | null = null;
+
+    // Upload avatar if selected
+    if (avatarFile) {
+      const ext = avatarFile.name.split(".").pop();
+      const path = `${user.id}/avatar.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(path, avatarFile, { upsert: true });
+
+      if (uploadError) {
+        toast.error("Erro ao enviar foto: " + uploadError.message);
+        setLoading(false);
+        return;
+      }
+
+      const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+      avatarUrl = urlData.publicUrl;
+    }
+
     const { error } = await supabase
       .from("profiles")
       .update({
@@ -45,13 +80,14 @@ const CompleteProfile = () => {
         gender,
         preferred_hand: hand,
         preferred_side: side,
+        ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
       })
       .eq("user_id", user.id);
 
     if (error) {
       setLoading(false);
       if (error.message.includes("unique")) {
-        toast.error("Este username ja esta a ser usado");
+        toast.error("Este username já está a ser usado");
       } else {
         toast.error("Erro ao guardar perfil: " + error.message);
       }
@@ -105,11 +141,23 @@ const CompleteProfile = () => {
 
         <form onSubmit={handleComplete} className="space-y-5">
           <div className="flex justify-center">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarChange}
+            />
             <button
               type="button"
-              className="w-24 h-24 rounded-full bg-secondary border-2 border-dashed border-border flex items-center justify-center hover:border-primary transition-colors"
+              onClick={() => fileInputRef.current?.click()}
+              className="w-24 h-24 rounded-full bg-secondary border-2 border-dashed border-border flex items-center justify-center hover:border-primary transition-colors overflow-hidden"
             >
-              <Camera size={28} className="text-muted-foreground" />
+              {avatarPreview ? (
+                <img src={avatarPreview} alt="Preview" className="w-full h-full object-cover" />
+              ) : (
+                <Camera size={28} className="text-muted-foreground" />
+              )}
             </button>
           </div>
 

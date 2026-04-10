@@ -1,6 +1,7 @@
 import { ArrowLeft, TrendingUp, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
+import AvatarDisplay from "@/components/AvatarDisplay";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -16,16 +17,19 @@ const Profile = () => {
     queryFn: async () => {
       const { data: matches } = await supabase
         .from("matches")
-        .select("winner_team, player1_id, player2_id, player3_id, player4_id, points_awarded, created_at, team1_score, team2_score")
+        .select("winner_team, player1_id, player2_id, player3_id, player4_id, points_awarded, created_at, team1_score, team2_score, confirmed_by")
         .or(`player1_id.eq.${user!.id},player2_id.eq.${user!.id},player3_id.eq.${user!.id},player4_id.eq.${user!.id}`)
         .order("created_at", { ascending: false })
-        .limit(5);
+        .limit(10);
 
       if (!matches) return { wins: 0, losses: 0, recentMatches: [] };
 
+      // Only count fully confirmed matches
+      const confirmedMatches = matches.filter((m) => (m.confirmed_by || []).length === 4);
+
       let wins = 0;
       let losses = 0;
-      const recentMatches = matches.map((m) => {
+      const recentMatches = confirmedMatches.slice(0, 5).map((m) => {
         const isTeam1 = m.player1_id === user!.id || m.player2_id === user!.id;
         const won = (isTeam1 && m.winner_team === 1) || (!isTeam1 && m.winner_team === 2);
         if (won) wins++;
@@ -59,7 +63,6 @@ const Profile = () => {
   };
 
   const displayName = profile?.full_name || profile?.username || "Jogador";
-  const initial = displayName.charAt(0).toUpperCase();
 
   return (
     <div className="min-h-screen pb-24 animate-fade-in">
@@ -69,9 +72,7 @@ const Profile = () => {
         </button>
 
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-xl font-black text-primary">
-            {initial}
-          </div>
+          <AvatarDisplay avatarUrl={profile?.avatar_url} name={displayName} size="lg" />
           <div>
             <h1 className="text-xl font-bold">{displayName}</h1>
             <p className="text-muted-foreground text-sm">
@@ -82,8 +83,8 @@ const Profile = () => {
 
         <div className="grid grid-cols-3 gap-3 mb-6">
           {[
-            { label: "Divisao", value: divisionData?.name || "Bronze" },
-            { label: "Vitorias", value: matchStats?.wins ?? 0 },
+            { label: "Divisão", value: divisionData?.name || "Bronze" },
+            { label: "Vitórias", value: matchStats?.wins ?? 0 },
             { label: "Derrotas", value: matchStats?.losses ?? 0 },
           ].map((stat) => (
             <div key={stat.label} className="glass-card p-3 text-center">
@@ -96,9 +97,9 @@ const Profile = () => {
         <div className="glass-card p-4 mb-6">
           <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-3">Dados</p>
           <div className="grid grid-cols-2 gap-y-3 text-sm">
-            <span className="text-muted-foreground">Genero</span>
+            <span className="text-muted-foreground">Género</span>
             <span className="font-medium">{profile?.gender || "-"}</span>
-            <span className="text-muted-foreground">Mao</span>
+            <span className="text-muted-foreground">Mão</span>
             <span className="font-medium">{profile?.preferred_hand || "-"}</span>
             <span className="text-muted-foreground">Lado</span>
             <span className="font-medium">{profile?.preferred_side || "-"}</span>
@@ -108,14 +109,14 @@ const Profile = () => {
         </div>
 
         <div className="mb-6">
-          <h2 className="font-bold text-base mb-3">Ultimos Jogos</h2>
+          <h2 className="font-bold text-base mb-3">Últimos Jogos</h2>
           <div className="glass-card divide-y divide-border/50">
             {matchStats?.recentMatches && matchStats.recentMatches.length > 0 ? (
               matchStats.recentMatches.map((game, i) => (
                 <div key={i} className="flex items-center px-4 py-3">
                   <span className={`w-2 h-2 rounded-full mr-3 ${game.won ? "bg-success" : "bg-destructive"}`} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{game.won ? "Vitoria" : "Derrota"}</p>
+                    <p className="text-sm font-medium">{game.won ? "Vitória" : "Derrota"}</p>
                     <p className="text-xs text-muted-foreground">{game.score} · {game.date}</p>
                   </div>
                   <span className={`text-xs font-bold ${game.won ? "text-success" : "text-muted-foreground"}`}>
@@ -125,7 +126,7 @@ const Profile = () => {
               ))
             ) : (
               <div className="px-4 py-6 text-center text-muted-foreground text-sm">
-                Sem jogos registados
+                Sem jogos confirmados
               </div>
             )}
           </div>
@@ -144,7 +145,7 @@ const Profile = () => {
         <div className="mt-2">
           <Button variant="outline" className="w-full gap-2 border-destructive/30 text-destructive hover:bg-destructive/10" onClick={handleLogout}>
             <LogOut size={18} />
-            Terminar sessao
+            Terminar sessão
           </Button>
         </div>
       </div>
