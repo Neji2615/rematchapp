@@ -1,26 +1,45 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Check } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-const mockPlayers = ["Carlos M.", "Ana R.", "Miguel S.", "João P.", "Sofia L.", "Pedro G."];
+interface PlayerOption {
+  user_id: string;
+  username: string | null;
+  full_name: string | null;
+}
 
 const InsertResult = () => {
   const navigate = useNavigate();
-  const [partner, setPartner] = useState("");
-  const [opp1, setOpp1] = useState("");
-  const [opp2, setOpp2] = useState("");
+  const { user } = useAuth();
+  const [players, setPlayers] = useState<PlayerOption[]>([]);
+  const [partner, setPartner] = useState<PlayerOption | null>(null);
+  const [opp1, setOpp1] = useState<PlayerOption | null>(null);
+  const [opp2, setOpp2] = useState<PlayerOption | null>(null);
   const [sets, setSets] = useState([
     { us: "", them: "" },
     { us: "", them: "" },
     { us: "", them: "" },
   ]);
-  const [showPartnerList, setShowPartnerList] = useState(false);
-  const [showOpp1List, setShowOpp1List] = useState(false);
-  const [showOpp2List, setShowOpp2List] = useState(false);
+  const [activeSelector, setActiveSelector] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchPlayers = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("user_id, username, full_name")
+        .not("username", "is", null);
+      if (data) setPlayers(data.filter((p) => p.user_id !== user?.id));
+    };
+    fetchPlayers();
+  }, [user?.id]);
 
   const updateSet = (index: number, side: "us" | "them", value: string) => {
     const newSets = [...sets];
@@ -39,30 +58,114 @@ const InsertResult = () => {
     return set1Won !== set2Won;
   };
 
+  const getDisplayName = (p: PlayerOption) =>
+    p.full_name || p.username || "Jogador";
+
+  const selectedIds = [partner?.user_id, opp1?.user_id, opp2?.user_id].filter(Boolean);
+
+  const filteredPlayers = players.filter(
+    (p) =>
+      !selectedIds.includes(p.user_id) &&
+      (getDisplayName(p).toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.username && p.username.toLowerCase().includes(searchTerm.toLowerCase())))
+  );
+
+  const selectPlayer = (p: PlayerOption) => {
+    if (activeSelector === "partner") setPartner(p);
+    else if (activeSelector === "opp1") setOpp1(p);
+    else if (activeSelector === "opp2") setOpp2(p);
+    setActiveSelector(null);
+    setSearchTerm("");
+  };
+
+  const calculateWinner = () => {
+    let team1Sets = 0;
+    let team2Sets = 0;
+    let team1Games = 0;
+    let team2Games = 0;
+    const numSets = isOneOne() ? 3 : 2;
+
+    for (let i = 0; i < numSets; i++) {
+      const us = parseInt(sets[i].us);
+      const them = parseInt(sets[i].them);
+      if (isNaN(us) || isNaN(them)) return null;
+      team1Games += us;
+      team2Games += them;
+      if (us > them) team1Sets++;
+      else if (them > us) team2Sets++;
+    }
+
+    if (team1Sets === team2Sets) return null;
+    return {
+      winner_team: team1Sets > team2Sets ? 1 : 2,
+      team1_score: team1Games,
+      team2_score: team2Games,
+    };
+  };
+
+  const handleSubmit = async () => {
+    if (!user || !partner || !opp1 || !opp2) {
+      toast.error("Seleciona todos os jogadores");
+      return;
+    }
+
+    const result = calculateWinner();
+    if (!result) {
+      toast.error("Resultado inválido - preenche todos os sets");
+      return;
+    }
+
+    setLoading(true);
+
+    const { error } = await supabase.from("matches").insert({
+      player1_id: user.id,
+      player2_id: partner.user_id,
+      player3_id: opp1.user_id,
+      player4_id: opp2.user_id,
+      team1_score: result.team1_score,
+      team2_score: result.team2_score,
+      winner_team: result.winner_team,
+      points_awarded: 3,
+      confirmed_by: [user.id],
+    });
+
+    setLoading(false);
+
+    if (error) {
+      toast.error("Erro ao inserir resultado: " + error.message);
+      return;
+    }
+
+    toast.success("Resultado inserido! A aguardar confirmação dos outros jogadores.");
+    navigate("/home");
+  };
+
   const PlayerSelector = ({
     label,
+    selectorKey,
     value,
-    showList,
-    setShowList,
   }: {
     label: string;
-    value: string;
-    showList: boolean;
-    setShowList: (v: boolean) => void;
+    selectorKey: string;
+    value: PlayerOption | null;
   }) => (
     <div className="space-y-2">
       <Label>{label}</Label>
       <button
         type="button"
         onClick={() => {
-          setShowList(!showList);
+          setActiveSelector(activeSelector === selectorKey ? null : selectorKey);
           setSearchTerm("");
         }}
         className="w-full text-left px-3 py-2.5 rounded-lg bg-secondary border border-border text-sm"
       >
-        {value || <span className="text-muted-foreground">Selecionar jogador</span>}
+        {value ? (
+          getDisplayName(value)
+        ) : (
+          <span className="text-muted-foreground">Selecionar jogador</span>
+        )}
       </button>
-      {showList && (
+      {activeSelector === selectorKey && (
         <div className="glass-card p-2 space-y-1 animate-slide-up">
           <Input
             placeholder="Procurar..."
@@ -70,22 +173,22 @@ const InsertResult = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="bg-background/50 border-border mb-1 h-9 text-sm"
           />
-          {mockPlayers
-            .filter((p) => p.toLowerCase().includes(searchTerm.toLowerCase()))
-            .map((p) => (
+          {filteredPlayers.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-2">Sem jogadores encontrados</p>
+          ) : (
+            filteredPlayers.map((p) => (
               <button
-                key={p}
-                onClick={() => {
-                  if (label.includes("Parceiro")) setPartner(p);
-                  else if (label.includes("1")) setOpp1(p);
-                  else setOpp2(p);
-                  setShowList(false);
-                }}
+                key={p.user_id}
+                onClick={() => selectPlayer(p)}
                 className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-primary/10 transition-colors"
               >
-                {p}
+                {getDisplayName(p)}
+                {p.username && (
+                  <span className="text-muted-foreground ml-1">@{p.username}</span>
+                )}
               </button>
-            ))}
+            ))
+          )}
         </div>
       )}
     </div>
@@ -102,12 +205,12 @@ const InsertResult = () => {
       <div className="space-y-5">
         <div className="glass-card p-4 space-y-4">
           <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Jogadores</p>
-          <PlayerSelector label="Parceiro" value={partner} showList={showPartnerList} setShowList={setShowPartnerList} />
+          <PlayerSelector label="Parceiro" selectorKey="partner" value={partner} />
           <div className="border-t border-border/50 pt-4">
             <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-3">Adversários</p>
             <div className="space-y-3">
-              <PlayerSelector label="Adversário 1" value={opp1} showList={showOpp1List} setShowList={setShowOpp1List} />
-              <PlayerSelector label="Adversário 2" value={opp2} showList={showOpp2List} setShowList={setShowOpp2List} />
+              <PlayerSelector label="Adversário 1" selectorKey="opp1" value={opp1} />
+              <PlayerSelector label="Adversário 2" selectorKey="opp2" value={opp2} />
             </div>
           </div>
         </div>
@@ -145,9 +248,13 @@ const InsertResult = () => {
           })}
         </div>
 
-        <Button className="w-full h-12 font-bold text-sm glow-primary gap-2">
+        <Button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="w-full h-12 font-bold text-sm glow-primary gap-2"
+        >
           <Check size={18} />
-          Confirmar Resultado
+          {loading ? "A enviar..." : "Confirmar Resultado"}
         </Button>
       </div>
     </div>
