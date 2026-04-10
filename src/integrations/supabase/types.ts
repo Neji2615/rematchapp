@@ -306,7 +306,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      confirm_match: { Args: { match_id: string }; Returns: Json }
     }
     Enums: {
       [_ in never]: never
