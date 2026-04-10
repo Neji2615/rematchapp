@@ -28,7 +28,9 @@ const Register = () => {
       toast.error(error.message);
     } else {
       toast.success("Conta criada com sucesso!");
-      navigate("/complete-profile");
+      // With auto-confirm, user is immediately logged in
+      // Wait briefly for auth state to update
+      setTimeout(() => navigate("/complete-profile"), 500);
     }
   };
 
