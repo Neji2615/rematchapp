@@ -307,6 +307,16 @@ export type Database = {
     }
     Functions: {
       confirm_match: { Args: { match_id: string }; Returns: Json }
+      process_weekly_promotions: { Args: never; Returns: Json }
+      upsert_weekly_ranking: {
+        Args: {
+          _player_id: string
+          _points_to_add: number
+          _week_end: string
+          _week_start: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
