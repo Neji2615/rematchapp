@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Plus, Swords, TrendingUp, Medal } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
+import NotificationBell from "@/components/NotificationBell";
 import AvatarDisplay from "@/components/AvatarDisplay";
 import MatchConfirmation from "@/components/MatchConfirmation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -93,10 +94,11 @@ const Home = () => {
     <div className="min-h-screen pb-24 animate-fade-in">
       <div className="px-6 pt-12 pb-6 flex items-center gap-3">
         <AvatarDisplay avatarUrl={profile?.avatar_url} name={displayName} size="md" />
-        <div>
+        <div className="flex-1">
           <p className="text-muted-foreground text-sm">Olá,</p>
           <h1 className="text-2xl font-bold">{displayName}</h1>
         </div>
+        <NotificationBell />
       </div>
 
       <div className="px-6 mb-6">
