@@ -180,6 +180,11 @@ const InsertResult = () => {
       return;
     }
 
+    // Mark rematch as completed
+    if (isRematch && rematchState?.rematchId) {
+      await supabase.from("rematches").update({ status: "completed" }).eq("id", rematchState.rematchId);
+    }
+
     toast.success("Resultado inserido! A aguardar confirmação dos outros jogadores.");
     navigate("/home");
   };
