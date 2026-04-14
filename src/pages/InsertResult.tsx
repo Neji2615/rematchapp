@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,7 @@ interface PlayerOption {
 
 const InsertResult = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [players, setPlayers] = useState<PlayerOption[]>([]);
   const [partner, setPartner] = useState<PlayerOption | null>(null);
@@ -30,16 +31,43 @@ const InsertResult = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Rematch state from navigation
+  const rematchState = location.state as {
+    rematchId?: string;
+    partnerId?: string;
+    opp1Id?: string;
+    opp2Id?: string;
+    bonusPoints?: number;
+  } | null;
+  const isRematch = !!rematchState?.rematchId;
+
   useEffect(() => {
     const fetchPlayers = async () => {
       const { data } = await supabase
         .from("profiles")
         .select("user_id, username, full_name")
         .not("username", "is", null);
-      if (data) setPlayers(data.filter((p) => p.user_id !== user?.id));
+      if (data) {
+        const allPlayers = data.filter((p) => p.user_id !== user?.id);
+        setPlayers(allPlayers);
+
+        // Auto-fill from rematch state
+        if (rematchState?.partnerId) {
+          const p = data.find((x) => x.user_id === rematchState.partnerId);
+          if (p) setPartner(p);
+        }
+        if (rematchState?.opp1Id) {
+          const p = data.find((x) => x.user_id === rematchState.opp1Id);
+          if (p) setOpp1(p);
+        }
+        if (rematchState?.opp2Id) {
+          const p = data.find((x) => x.user_id === rematchState.opp2Id);
+          if (p) setOpp2(p);
+        }
+      }
     };
     fetchPlayers();
-  }, [user?.id]);
+  }, [user?.id, rematchState?.partnerId, rematchState?.opp1Id, rematchState?.opp2Id]);
 
   const updateSet = (index: number, side: "us" | "them", value: string) => {
     const newSets = [...sets];
