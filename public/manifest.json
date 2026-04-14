@@ -2,7 +2,7 @@
   "name": "Rematch",
   "short_name": "Rematch",
   "description": "O teu padel. A tua desforra.",
-  "start_url": "/",
+  "start_url": "/login",
   "display": "standalone",
   "background_color": "#0f1318",
   "theme_color": "#a3e635",
