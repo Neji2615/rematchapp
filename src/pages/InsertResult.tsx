@@ -150,6 +150,8 @@ const InsertResult = () => {
 
     setLoading(true);
 
+    const bonusPoints = isRematch ? (rematchState?.bonusPoints ?? 1) : 0;
+
     const { error } = await supabase.from("matches").insert({
       player1_id: user.id,
       player2_id: partner.user_id,
@@ -165,6 +167,9 @@ const InsertResult = () => {
       set3_team1: result.set3_team1,
       set3_team2: result.set3_team2,
       points_awarded: 3,
+      bonus_points: bonusPoints,
+      is_rematch: isRematch,
+      rematch_id: rematchState?.rematchId || null,
       confirmed_by: [user.id],
     });
 
