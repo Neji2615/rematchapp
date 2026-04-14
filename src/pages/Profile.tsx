@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { formatSetScore } from "@/lib/formatScore";
 
 const genderOptions = ["Masculino", "Feminino"];
 const handOptions = ["Direita", "Esquerda"];
