@@ -193,20 +193,24 @@ const InsertResult = () => {
     label,
     selectorKey,
     value,
+    disabled,
   }: {
     label: string;
     selectorKey: string;
     value: PlayerOption | null;
+    disabled?: boolean;
   }) => (
     <div className="space-y-2">
       <Label>{label}</Label>
       <button
         type="button"
+        disabled={disabled}
         onClick={() => {
+          if (disabled) return;
           setActiveSelector(activeSelector === selectorKey ? null : selectorKey);
           setSearchTerm("");
         }}
-        className="w-full text-left px-3 py-2.5 rounded-lg bg-secondary border border-border text-sm"
+        className={`w-full text-left px-3 py-2.5 rounded-lg bg-secondary border border-border text-sm ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
       >
         {value ? (
           getDisplayName(value)
