@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { formatSetScore } from "@/lib/formatScore";
 
 interface MatchConfirmationProps {
   match: {
@@ -16,6 +17,12 @@ interface MatchConfirmationProps {
     winner_team: number;
     team1_score: number;
     team2_score: number;
+    set1_team1?: number;
+    set1_team2?: number;
+    set2_team1?: number;
+    set2_team2?: number;
+    set3_team1?: number | null;
+    set3_team2?: number | null;
     points_awarded: number;
     created_at: string;
   };
@@ -80,7 +87,7 @@ const MatchConfirmation = ({ match, playerNames = {} }: MatchConfirmationProps) 
 
       <div className="flex items-center justify-between">
         <span className="text-lg font-bold">
-          {match.team1_score} - {match.team2_score}
+          {formatSetScore(match)}
         </span>
         <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
           allConfirmed ? "bg-success/20 text-success" : "bg-warning/20 text-warning"

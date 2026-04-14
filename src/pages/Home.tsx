@@ -54,7 +54,7 @@ const Home = () => {
     queryFn: async () => {
       const { data: matches } = await supabase
         .from("matches")
-        .select("*")
+        .select("*, set1_team1, set1_team2, set2_team1, set2_team2, set3_team1, set3_team2")
         .or(`player1_id.eq.${user!.id},player2_id.eq.${user!.id},player3_id.eq.${user!.id},player4_id.eq.${user!.id}`)
         .order("created_at", { ascending: false });
 
