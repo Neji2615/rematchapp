@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,7 @@ interface PlayerOption {
 
 const InsertResult = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [players, setPlayers] = useState<PlayerOption[]>([]);
   const [partner, setPartner] = useState<PlayerOption | null>(null);
@@ -30,16 +31,43 @@ const InsertResult = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Rematch state from navigation
+  const rematchState = location.state as {
+    rematchId?: string;
+    partnerId?: string;
+    opp1Id?: string;
+    opp2Id?: string;
+    bonusPoints?: number;
+  } | null;
+  const isRematch = !!rematchState?.rematchId;
+
   useEffect(() => {
     const fetchPlayers = async () => {
       const { data } = await supabase
         .from("profiles")
         .select("user_id, username, full_name")
         .not("username", "is", null);
-      if (data) setPlayers(data.filter((p) => p.user_id !== user?.id));
+      if (data) {
+        const allPlayers = data.filter((p) => p.user_id !== user?.id);
+        setPlayers(allPlayers);
+
+        // Auto-fill from rematch state
+        if (rematchState?.partnerId) {
+          const p = data.find((x) => x.user_id === rematchState.partnerId);
+          if (p) setPartner(p);
+        }
+        if (rematchState?.opp1Id) {
+          const p = data.find((x) => x.user_id === rematchState.opp1Id);
+          if (p) setOpp1(p);
+        }
+        if (rematchState?.opp2Id) {
+          const p = data.find((x) => x.user_id === rematchState.opp2Id);
+          if (p) setOpp2(p);
+        }
+      }
     };
     fetchPlayers();
-  }, [user?.id]);
+  }, [user?.id, rematchState?.partnerId, rematchState?.opp1Id, rematchState?.opp2Id]);
 
   const updateSet = (index: number, side: "us" | "them", value: string) => {
     const newSets = [...sets];
@@ -122,6 +150,8 @@ const InsertResult = () => {
 
     setLoading(true);
 
+    const bonusPoints = isRematch ? (rematchState?.bonusPoints ?? 1) : 0;
+
     const { error } = await supabase.from("matches").insert({
       player1_id: user.id,
       player2_id: partner.user_id,
@@ -137,6 +167,9 @@ const InsertResult = () => {
       set3_team1: result.set3_team1,
       set3_team2: result.set3_team2,
       points_awarded: 3,
+      bonus_points: bonusPoints,
+      is_rematch: isRematch,
+      rematch_id: rematchState?.rematchId || null,
       confirmed_by: [user.id],
     });
 
@@ -147,6 +180,11 @@ const InsertResult = () => {
       return;
     }
 
+    // Mark rematch as completed
+    if (isRematch && rematchState?.rematchId) {
+      await supabase.from("rematches").update({ status: "completed" }).eq("id", rematchState.rematchId);
+    }
+
     toast.success("Resultado inserido! A aguardar confirmação dos outros jogadores.");
     navigate("/home");
   };
@@ -155,20 +193,24 @@ const InsertResult = () => {
     label,
     selectorKey,
     value,
+    disabled,
   }: {
     label: string;
     selectorKey: string;
     value: PlayerOption | null;
+    disabled?: boolean;
   }) => (
     <div className="space-y-2">
       <Label>{label}</Label>
       <button
         type="button"
+        disabled={disabled}
         onClick={() => {
+          if (disabled) return;
           setActiveSelector(activeSelector === selectorKey ? null : selectorKey);
           setSearchTerm("");
         }}
-        className="w-full text-left px-3 py-2.5 rounded-lg bg-secondary border border-border text-sm"
+        className={`w-full text-left px-3 py-2.5 rounded-lg bg-secondary border border-border text-sm ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
       >
         {value ? (
           getDisplayName(value)
@@ -211,17 +253,19 @@ const InsertResult = () => {
         <ArrowLeft size={24} />
       </button>
 
-      <h1 className="text-2xl font-bold mb-6">Inserir Resultado</h1>
+      <h1 className="text-2xl font-bold mb-6">{isRematch ? "Resultado da Desforra" : "Inserir Resultado"}</h1>
 
       <div className="space-y-5">
         <div className="glass-card p-4 space-y-4">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Jogadores</p>
-          <PlayerSelector label="Parceiro" selectorKey="partner" value={partner} />
+          <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
+            Jogadores {isRematch && <span className="text-primary">(Desforra)</span>}
+          </p>
+          <PlayerSelector label="Parceiro" selectorKey="partner" value={partner} disabled={isRematch} />
           <div className="border-t border-border/50 pt-4">
             <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-3">Adversários</p>
             <div className="space-y-3">
-              <PlayerSelector label="Adversário 1" selectorKey="opp1" value={opp1} />
-              <PlayerSelector label="Adversário 2" selectorKey="opp2" value={opp2} />
+              <PlayerSelector label="Adversário 1" selectorKey="opp1" value={opp1} disabled={isRematch} />
+              <PlayerSelector label="Adversário 2" selectorKey="opp2" value={opp2} disabled={isRematch} />
             </div>
           </div>
         </div>
