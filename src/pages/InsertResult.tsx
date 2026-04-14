@@ -253,17 +253,19 @@ const InsertResult = () => {
         <ArrowLeft size={24} />
       </button>
 
-      <h1 className="text-2xl font-bold mb-6">Inserir Resultado</h1>
+      <h1 className="text-2xl font-bold mb-6">{isRematch ? "Resultado da Desforra" : "Inserir Resultado"}</h1>
 
       <div className="space-y-5">
         <div className="glass-card p-4 space-y-4">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Jogadores</p>
-          <PlayerSelector label="Parceiro" selectorKey="partner" value={partner} />
+          <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
+            Jogadores {isRematch && <span className="text-primary">(Desforra)</span>}
+          </p>
+          <PlayerSelector label="Parceiro" selectorKey="partner" value={partner} disabled={isRematch} />
           <div className="border-t border-border/50 pt-4">
             <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-3">Adversários</p>
             <div className="space-y-3">
-              <PlayerSelector label="Adversário 1" selectorKey="opp1" value={opp1} />
-              <PlayerSelector label="Adversário 2" selectorKey="opp2" value={opp2} />
+              <PlayerSelector label="Adversário 1" selectorKey="opp1" value={opp1} disabled={isRematch} />
+              <PlayerSelector label="Adversário 2" selectorKey="opp2" value={opp2} disabled={isRematch} />
             </div>
           </div>
         </div>
