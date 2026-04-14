@@ -130,6 +130,12 @@ const InsertResult = () => {
       team1_score: result.team1_score,
       team2_score: result.team2_score,
       winner_team: result.winner_team,
+      set1_team1: result.set1_team1,
+      set1_team2: result.set1_team2,
+      set2_team1: result.set2_team1,
+      set2_team2: result.set2_team2,
+      set3_team1: result.set3_team1,
+      set3_team2: result.set3_team2,
       points_awarded: 3,
       confirmed_by: [user.id],
     });
