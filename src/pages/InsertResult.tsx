@@ -81,25 +81,30 @@ const InsertResult = () => {
   const calculateWinner = () => {
     let team1Sets = 0;
     let team2Sets = 0;
-    let team1Games = 0;
-    let team2Games = 0;
     const numSets = isOneOne() ? 3 : 2;
 
     for (let i = 0; i < numSets; i++) {
       const us = parseInt(sets[i].us);
       const them = parseInt(sets[i].them);
       if (isNaN(us) || isNaN(them)) return null;
-      team1Games += us;
-      team2Games += them;
+      if (us === them) return null; // sets can't be tied
       if (us > them) team1Sets++;
-      else if (them > us) team2Sets++;
+      else team2Sets++;
     }
 
     if (team1Sets === team2Sets) return null;
+
+    const needsThird = numSets === 3;
     return {
       winner_team: team1Sets > team2Sets ? 1 : 2,
-      team1_score: team1Games,
-      team2_score: team2Games,
+      team1_score: team1Sets, // sets won
+      team2_score: team2Sets,
+      set1_team1: parseInt(sets[0].us),
+      set1_team2: parseInt(sets[0].them),
+      set2_team1: parseInt(sets[1].us),
+      set2_team2: parseInt(sets[1].them),
+      set3_team1: needsThird ? parseInt(sets[2].us) : null,
+      set3_team2: needsThird ? parseInt(sets[2].them) : null,
     };
   };
 
@@ -125,6 +130,12 @@ const InsertResult = () => {
       team1_score: result.team1_score,
       team2_score: result.team2_score,
       winner_team: result.winner_team,
+      set1_team1: result.set1_team1,
+      set1_team2: result.set1_team2,
+      set2_team1: result.set2_team1,
+      set2_team2: result.set2_team2,
+      set3_team1: result.set3_team1,
+      set3_team2: result.set3_team2,
       points_awarded: 3,
       confirmed_by: [user.id],
     });

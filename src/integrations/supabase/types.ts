@@ -48,6 +48,12 @@ export type Database = {
           player4_id: string
           points_awarded: number
           rematch_id: string | null
+          set1_team1: number
+          set1_team2: number
+          set2_team1: number
+          set2_team2: number
+          set3_team1: number | null
+          set3_team2: number | null
           team1_score: number
           team2_score: number
           winner_team: number
@@ -64,6 +70,12 @@ export type Database = {
           player4_id: string
           points_awarded?: number
           rematch_id?: string | null
+          set1_team1?: number
+          set1_team2?: number
+          set2_team1?: number
+          set2_team2?: number
+          set3_team1?: number | null
+          set3_team2?: number | null
           team1_score: number
           team2_score: number
           winner_team: number
@@ -80,6 +92,12 @@ export type Database = {
           player4_id?: string
           points_awarded?: number
           rematch_id?: string | null
+          set1_team1?: number
+          set1_team2?: number
+          set2_team1?: number
+          set2_team2?: number
+          set3_team1?: number | null
+          set3_team2?: number | null
           team1_score?: number
           team2_score?: number
           winner_team?: number
