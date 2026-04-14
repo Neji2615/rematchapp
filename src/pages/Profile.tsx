@@ -118,7 +118,7 @@ const Profile = () => {
     queryFn: async () => {
       const { data: matches } = await supabase
         .from("matches")
-        .select("winner_team, player1_id, player2_id, player3_id, player4_id, points_awarded, created_at, team1_score, team2_score, confirmed_by")
+        .select("winner_team, player1_id, player2_id, player3_id, player4_id, points_awarded, created_at, team1_score, team2_score, confirmed_by, set1_team1, set1_team2, set2_team1, set2_team2, set3_team1, set3_team2")
         .or(`player1_id.eq.${user!.id},player2_id.eq.${user!.id},player3_id.eq.${user!.id},player4_id.eq.${user!.id}`)
         .order("created_at", { ascending: false })
         .limit(10);
@@ -133,7 +133,7 @@ const Profile = () => {
         const won = (isTeam1 && m.winner_team === 1) || (!isTeam1 && m.winner_team === 2);
         if (won) wins++;
         else losses++;
-        const score = `${m.team1_score}-${m.team2_score}`;
+        const score = formatSetScore(m);
         const date = new Date(m.created_at).toLocaleDateString("pt-PT", { day: "2-digit", month: "short" });
         return { won, score, points: won ? m.points_awarded : 0, date };
       });
