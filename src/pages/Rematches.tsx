@@ -89,6 +89,9 @@ const Rematches = () => {
         const daysLeft = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
         const hoursLeft = Math.max(0, Math.ceil((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)));
 
+        // Determine if current user is on the losing team (requester/partner)
+        const isLoser = r.requester_id === user!.id || r.partner_id === user!.id;
+
         return {
           id: r.id,
           teams: `${getName(r.req)} & ${getName(r.par)} vs ${getName(r.op1)} & ${getName(r.op2)}`,
@@ -96,6 +99,12 @@ const Rematches = () => {
           matchNum: r.rematch_count,
           bonusPoints: r.rematch_count,
           expired: diff <= 0,
+          isLoser,
+          // Player IDs for auto-fill
+          requesterId: r.requester_id,
+          partnerId: r.partner_id,
+          opponent1Id: r.opponent1_id,
+          opponent2Id: r.opponent2_id,
         };
       });
     },
@@ -311,9 +320,17 @@ const Rematches = () => {
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground">Bónus desforra: +{m.bonusPoints} ponto(s)</p>
-                  {!m.expired && (
+                  {!m.expired && m.isLoser && (
                     <button
-                      onClick={() => navigate("/insert-result")}
+                      onClick={() => navigate("/insert-result", {
+                        state: {
+                          rematchId: m.id,
+                          partnerId: m.requesterId === user?.id ? m.partnerId : m.requesterId,
+                          opp1Id: m.opponent1Id,
+                          opp2Id: m.opponent2Id,
+                          bonusPoints: m.bonusPoints,
+                        },
+                      })}
                       className="w-full py-2 rounded-lg bg-primary/10 text-primary text-xs font-bold"
                     >
                       Inserir Resultado
