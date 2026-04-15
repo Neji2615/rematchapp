@@ -48,7 +48,7 @@ const InsertResult = () => {
         .select("user_id, username, full_name")
         .not("username", "is", null);
       if (data) {
-        const allPlayers = data.filter((p) => p.user_id !== profiles?.id);
+        const allPlayers = data.filter((p) => p.user_id !== user?.id);
         setPlayers(allPlayers);
 
         // Auto-fill from rematch state
@@ -67,7 +67,7 @@ const InsertResult = () => {
       }
     };
     fetchPlayers();
-  }, [profiles?.id, rematchState?.partnerId, rematchState?.opp1Id, rematchState?.opp2Id]);
+  }, [user?.id, rematchState?.partnerId, rematchState?.opp1Id, rematchState?.opp2Id]);
 
   const updateSet = (index: number, side: "us" | "them", value: string) => {
     const newSets = [...sets];

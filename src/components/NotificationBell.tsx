@@ -9,8 +9,8 @@ const NotificationBell = () => {
   const navigate = useNavigate();
 
   const { data: unreadCount } = useQuery({
-    queryKey: ["unread-count", profiles?.id],
-    enabled: !!profiles?.id,
+    queryKey: ["unread-count", user?.id],  // ✅
+    enabled: !!user?.id,                   // ✅
     refetchInterval: 30000,
     queryFn: async () => {
       const { count } = await supabase
