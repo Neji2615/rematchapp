@@ -33,11 +33,11 @@ const Profile = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const startEditing = () => {
-    setEditUsername(profiles?.username || "");
-    setEditFullName(profiles?.full_name || "");
-    setEditGender(profiles?.gender || "");
-    setEditHand(profiles?.preferred_hand || "");
-    setEditSide(profiles?.preferred_side || "");
+    setEditUsername(profile?.username || "");
+    setEditFullName(profile?.full_name || "");
+    setEditGender(profile?.gender || "");
+    setEditHand(profile?.preferred_hand || "");
+    setEditSide(profile?.preferred_side || "");
     setAvatarFile(null);
     setAvatarPreview(null);
     setEditing(true);
