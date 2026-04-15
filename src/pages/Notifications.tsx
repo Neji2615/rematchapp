@@ -12,8 +12,8 @@ const Notifications = () => {
   const queryClient = useQueryClient();
 
   const { data: notifications } = useQuery({
-    queryKey: ["notifications", profiles?.id],
-    enabled: !!profiles?.id,
+    queryKey: ["notifications", profile?.id],
+    enabled: !!profile?.id,
     queryFn: async () => {
       const { data } = await supabase
         .from("notifications")

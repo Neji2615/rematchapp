@@ -80,7 +80,7 @@ const Home = () => {
         .in("user_id", Array.from(playerIds));
 
       const nameMap: Record<string, string> = {};
-      profiles?.forEach((p) => {
+      profile?.forEach((p) => {
         nameMap[p.user_id] = p.user_id === user!.id ? "Tu" : (p.full_name?.split(" ")[0] || p.username || "Jogador");
       });
 
@@ -161,17 +161,17 @@ const Home = () => {
         <div className="glass-card divide-y divide-border/50">
           {rankingData && rankingData.length > 0 ? (
             rankingData.map((entry: any, idx: number) => {
-              const isCurrentUser = entry.profiles?.user_id === profile?.id;
+              const isCurrentUser = entry.profile?.user_id === profile?.id;
               const name = isCurrentUser
                 ? "Tu"
-                : entry.profiles?.full_name?.split(" ")[0] || entry.profiles?.username || "Jogador";
+                : entry.profile?.full_name?.split(" ")[0] || entry.profile?.username || "Jogador";
               return (
                 <div key={idx} className={`flex items-center px-4 py-3 ${isCurrentUser ? "bg-primary/5" : ""}`}>
                   <span className={`w-7 text-sm font-bold ${idx < 3 ? "text-primary" : "text-muted-foreground"}`}>
                     {idx + 1}
                   </span>
                   <AvatarDisplay
-                    avatarUrl={entry.profiles?.avatar_url}
+                    avatarUrl={entry.profile?.avatar_url}
                     name={name}
                     size="sm"
                     className="mr-3"

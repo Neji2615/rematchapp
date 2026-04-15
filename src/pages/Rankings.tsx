@@ -42,7 +42,7 @@ const Rankings = () => {
   });
 
   const userDivision = divisions?.find((d) =>
-    allProfiles?.some((p) => p.user_id === profiles?.id && p.division_id === d.id)
+    allprofile?.some((p) => p.user_id === profile?.id && p.division_id === d.id)
   );
 
   const currentExpanded = expanded || userDivision?.name || divisions?.[0]?.name || "";
@@ -63,9 +63,9 @@ const Rankings = () => {
             ?.filter((p) => p.division_id === div.id)
             .map((p, idx) => ({
               pos: idx + 1,
-              name: p.user_id === profiles?.id ? "Tu" : (p.full_name?.split(" ")[0] || p.username || "Jogador"),
+              name: p.user_id === profile?.id ? "Tu" : (p.full_name?.split(" ")[0] || p.username || "Jogador"),
               points: p.total_points,
-              isCurrentUser: p.user_id === profiles?.id,
+              isCurrentUser: p.user_id === profile?.id,
               trend: "same" as string,
               avatarUrl: p.avatar_url,
             })) || [];

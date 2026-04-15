@@ -17,8 +17,8 @@ const Rematches = () => {
 
   // Matches where user lost and no rematch requested yet
   const { data: lostMatches } = useQuery({
-    queryKey: ["lost-matches", profiles?.id],
-    enabled: !!profiles?.id,
+    queryKey: ["lost-matches", profile?.id],
+    enabled: !!profile?.id,
     queryFn: async () => {
       const { data: matches } = await supabase
         .from("matches")
@@ -72,8 +72,8 @@ const Rematches = () => {
 
   // Active rematches
   const { data: activeRematches } = useQuery({
-    queryKey: ["active-rematches", profiles?.id],
-    enabled: !!profiles?.id,
+    queryKey: ["active-rematches", profile?.id],
+    enabled: !!profile?.id,
     queryFn: async () => {
       const { data } = await supabase
         .from("rematches")
@@ -112,8 +112,8 @@ const Rematches = () => {
 
   // Pending rematches (waiting for acceptance)
   const { data: pendingRematches } = useQuery({
-    queryKey: ["pending-rematches", profiles?.id],
-    enabled: !!profiles?.id,
+    queryKey: ["pending-rematches", profile?.id],
+    enabled: !!profile?.id,
     queryFn: async () => {
       const { data } = await supabase
         .from("rematches")
@@ -134,8 +134,8 @@ const Rematches = () => {
 
   // History
   const { data: historyRematches } = useQuery({
-    queryKey: ["history-rematches", profiles?.id],
-    enabled: !!profiles?.id,
+    queryKey: ["history-rematches", profile?.id],
+    enabled: !!profile?.id,
     queryFn: async () => {
       const { data } = await supabase
         .from("rematches")
@@ -325,7 +325,7 @@ const Rematches = () => {
                       onClick={() => navigate("/insert-result", {
                         state: {
                           rematchId: m.id,
-                          partnerId: m.requesterId === profiles?.id ? m.partnerId : m.requesterId,
+                          partnerId: m.requesterId === profile?.id ? m.partnerId : m.requesterId,
                           opp1Id: m.opponent1Id,
                           opp2Id: m.opponent2Id,
                           bonusPoints: m.bonusPoints,

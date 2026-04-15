@@ -113,8 +113,8 @@ const Profile = () => {
   };
 
   const { data: matchStats } = useQuery({
-    queryKey: ["match-stats", profiles?.id],
-    enabled: !!profiles?.id,
+    queryKey: ["match-stats", profile?.id],
+    enabled: !!profile?.id,
     queryFn: async () => {
       const { data: matches } = await supabase
         .from("matches")
@@ -143,8 +143,8 @@ const Profile = () => {
   });
 
   const { data: divisionData } = useQuery({
-    queryKey: ["division", profiles?.division_id],
-    enabled: !!profiles?.division_id,
+    queryKey: ["division", profile?.division_id],
+    enabled: !!profile?.division_id,
     queryFn: async () => {
       const { data } = await supabase
         .from("divisions")
@@ -160,7 +160,7 @@ const Profile = () => {
     navigate("/login");
   };
 
-  const displayName = profiles?.full_name || profiles?.username || "Jogador";
+  const displayName = profile?.full_name || profile?.username || "Jogador";
 
   const OptionGroup = ({
     label,
@@ -221,7 +221,7 @@ const Profile = () => {
               >
                 {avatarPreview ? (
                   <img src={avatarPreview} alt="Preview" className="w-full h-full object-cover" />
-                ) : profiles?.avatar_url ? (
+                ) : profile?.avatar_url ? (
                   <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
                   <Camera size={20} className="text-muted-foreground" />
@@ -232,7 +232,7 @@ const Profile = () => {
               </div>
             </div>
           ) : (
-            <AvatarDisplay avatarUrl={profiles?.avatar_url} name={displayName} size="lg" />
+            <AvatarDisplay avatarUrl={profile?.avatar_url} name={displayName} size="lg" />
           )}
           <div className="flex-1">
             {editing ? (
@@ -254,7 +254,7 @@ const Profile = () => {
               <>
                 <h1 className="text-xl font-bold">{displayName}</h1>
                 <p className="text-muted-foreground text-sm">
-                  {profiles?.username ? `@${profile.username}` : ""}
+                  {profile?.username ? `@${profile.username}` : ""}
                 </p>
               </>
             )}
@@ -309,13 +309,13 @@ const Profile = () => {
               <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-3">Dados</p>
               <div className="grid grid-cols-2 gap-y-3 text-sm">
                 <span className="text-muted-foreground">Género</span>
-                <span className="font-medium">{profiles?.gender || "-"}</span>
+                <span className="font-medium">{profile?.gender || "-"}</span>
                 <span className="text-muted-foreground">Mão</span>
-                <span className="font-medium">{profiles?.preferred_hand || "-"}</span>
+                <span className="font-medium">{profile?.preferred_hand || "-"}</span>
                 <span className="text-muted-foreground">Lado</span>
-                <span className="font-medium">{profiles?.preferred_side || "-"}</span>
+                <span className="font-medium">{profile?.preferred_side || "-"}</span>
                 <span className="text-muted-foreground">Pontos totais</span>
-                <span className="font-medium">{profiles?.total_points ?? 0}</span>
+                <span className="font-medium">{profile?.total_points ?? 0}</span>
               </div>
             </div>
 
