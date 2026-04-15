@@ -1,7 +1,4 @@
-Encontrei o problema! Em todo o ficheiro estás a usar profiles mas a variável do hook useAuth chama-se profile (sem s).
-Substitui todas as ocorrências de profiles?. por profile?. nas queryKeys e no resto do componente. Há também um conflito de nomes — dentro do queryFn de pendingMatches declaras const { data: profiles } que sombreia o nome, mas isso também se resolve ao renomear.
-Aqui está o ficheiro corrigido:
-tsximport { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Plus, Swords, TrendingUp, Medal } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
