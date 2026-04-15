@@ -14,8 +14,8 @@ const Home = () => {
   const { user, profile } = useAuth();
 
   const { data: rankingData } = useQuery({
-    queryKey: ["weekly-ranking", profile?.division_id],  // ✅
-    enabled: !!profile?.division_id,                     // ✅
+    queryKey: ["weekly-ranking", profiles?.division_id],
+    enabled: !!profiles?.division_id,
     queryFn: async () => {
       const now = new Date();
       const weekStart = new Date(now);
@@ -35,8 +35,8 @@ const Home = () => {
   });
 
   const { data: divisionData } = useQuery({
-    queryKey: ["division", profile?.division_id],  // ✅
-    enabled: !!profile?.division_id,               // ✅
+    queryKey: ["division", profiles?.division_id],
+    enabled: !!profiles?.division_id,
     queryFn: async () => {
       const { data } = await supabase
         .from("divisions")
@@ -47,9 +47,10 @@ const Home = () => {
     },
   });
 
+  // Pending match confirmations
   const { data: pendingMatches } = useQuery({
-    queryKey: ["pending-confirmations", profile?.id],  // ✅
-    enabled: !!profile?.id,                            // ✅
+    queryKey: ["pending-confirmations", profiles?.id],
+    enabled: !!profiles?.id,
     queryFn: async () => {
       const { data: matches } = await supabase
         .from("matches")
@@ -59,6 +60,7 @@ const Home = () => {
 
       if (!matches) return [];
 
+      // Filter matches not fully confirmed and where user hasn't confirmed yet
       const pending = matches.filter((m) => {
         const confirmed = m.confirmed_by || [];
         return confirmed.length < 4 && !confirmed.includes(user!.id);
@@ -66,18 +68,19 @@ const Home = () => {
 
       if (pending.length === 0) return [];
 
+      // Fetch player names for these matches
       const playerIds = new Set<string>();
       pending.forEach((m) => {
         [m.player1_id, m.player2_id, m.player3_id, m.player4_id].forEach((id) => playerIds.add(id));
       });
 
-      const { data: playerProfiles } = await supabase  // ✅ renomeado para evitar conflito
+      const { data: profiles } = await supabase
         .from("profiles")
         .select("user_id, full_name, username")
         .in("user_id", Array.from(playerIds));
 
       const nameMap: Record<string, string> = {};
-      playerProfiles?.forEach((p) => {  // ✅
+      profiles?.forEach((p) => {
         nameMap[p.user_id] = p.user_id === user!.id ? "Tu" : (p.full_name?.split(" ")[0] || p.username || "Jogador");
       });
 
@@ -85,12 +88,12 @@ const Home = () => {
     },
   });
 
-  const displayName = profile?.full_name?.split(" ")[0] || profile?.username || "Jogador";  // ✅
+  const displayName = profiles?.full_name?.split(" ")[0] || profiles?.username || "Jogador";
 
   return (
     <div className="min-h-screen pb-24 animate-fade-in">
       <div className="px-6 pt-12 pb-6 flex items-center gap-3">
-        <AvatarDisplay avatarUrl={profile?.avatar_url} name={displayName} size="md" />  {/* ✅ */}
+        <AvatarDisplay avatarUrl={profiles?.avatar_url} name={displayName} size="md" />
         <div className="flex-1">
           <p className="text-muted-foreground text-sm">Olá,</p>
           <h1 className="text-2xl font-bold">{displayName}</h1>
@@ -113,11 +116,12 @@ const Home = () => {
           </div>
           <div className="mt-4 flex items-center gap-2 text-sm">
             <TrendingUp size={16} className="text-success" />
-            <span className="text-success font-medium">{profile?.total_points ?? 0} pontos totais</span>  {/* ✅ */}
+            <span className="text-success font-medium">{profiles?.total_points ?? 0} pontos totais</span>
           </div>
         </div>
       </div>
 
+      {/* Pending confirmations */}
       {pendingMatches && pendingMatches.length > 0 && (
         <div className="px-6 mb-6">
           <h2 className="font-bold text-base mb-3">A aguardar confirmação</h2>
@@ -157,7 +161,7 @@ const Home = () => {
         <div className="glass-card divide-y divide-border/50">
           {rankingData && rankingData.length > 0 ? (
             rankingData.map((entry: any, idx: number) => {
-              const isCurrentUser = entry.profiles?.user_id === profile?.id;  // ✅
+              const isCurrentUser = entry.profiles?.user_id === profiles?.id;
               const name = isCurrentUser
                 ? "Tu"
                 : entry.profiles?.full_name?.split(" ")[0] || entry.profiles?.username || "Jogador";
