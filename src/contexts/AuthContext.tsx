@@ -3,7 +3,7 @@ import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Profile {
-  user_id: string;
+  id: string;
   username: string | null;
   full_name: string | null;
   avatar_url: string | null;
@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { data } = await supabase
       .from("profiles")
       .select("*")
-      .eq("user_id", userId)
+      .eq("id", userId)
       .maybeSingle();
     setProfile(data);
     setProfileLoading(false);
@@ -80,7 +80,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       email,
       password,
       options: {
-        data: { full_name: full_Name },
+        data: { full_name: fullName },
         emailRedirectTo: window.location.origin,
       },
     });
