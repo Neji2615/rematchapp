@@ -32,7 +32,7 @@ const Login = () => {
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (!profile?.username) {
+      if (!profiles?.username) {
         navigate("/complete-profile");
       } else {
         navigate("/home");

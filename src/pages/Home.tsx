@@ -1,4 +1,7 @@
-import { useNavigate } from "react-router-dom";
+Encontrei o problema! Em todo o ficheiro estás a usar profiles mas a variável do hook useAuth chama-se profile (sem s).
+Substitui todas as ocorrências de profiles?. por profile?. nas queryKeys e no resto do componente. Há também um conflito de nomes — dentro do queryFn de pendingMatches declaras const { data: profiles } que sombreia o nome, mas isso também se resolve ao renomear.
+Aqui está o ficheiro corrigido:
+tsximport { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Plus, Swords, TrendingUp, Medal } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
@@ -14,8 +17,8 @@ const Home = () => {
   const { user, profile } = useAuth();
 
   const { data: rankingData } = useQuery({
-    queryKey: ["weekly-ranking", profile?.division_id],
-    enabled: !!profile?.division_id,
+    queryKey: ["weekly-ranking", profile?.division_id],  // ✅
+    enabled: !!profile?.division_id,                     // ✅
     queryFn: async () => {
       const now = new Date();
       const weekStart = new Date(now);
@@ -24,7 +27,7 @@ const Home = () => {
 
       const { data } = await supabase
         .from("rankings")
-        .select("points, position, profiles(full_name, username, user_id, avatar_url)")
+        .select("points, position, profiles(full_name, username, id, avatar_url)")
         .eq("division_id", profile!.division_id!)
         .eq("week_start", weekStartStr)
         .order("points", { ascending: false })
@@ -35,8 +38,8 @@ const Home = () => {
   });
 
   const { data: divisionData } = useQuery({
-    queryKey: ["division", profile?.division_id],
-    enabled: !!profile?.division_id,
+    queryKey: ["division", profile?.division_id],  // ✅
+    enabled: !!profile?.division_id,               // ✅
     queryFn: async () => {
       const { data } = await supabase
         .from("divisions")
@@ -47,10 +50,9 @@ const Home = () => {
     },
   });
 
-  // Pending match confirmations
   const { data: pendingMatches } = useQuery({
-    queryKey: ["pending-confirmations", profiles?.id],
-    enabled: !!profiles?.id,
+    queryKey: ["pending-confirmations", profile?.id],  // ✅
+    enabled: !!profile?.id,                            // ✅
     queryFn: async () => {
       const { data: matches } = await supabase
         .from("matches")
@@ -60,7 +62,6 @@ const Home = () => {
 
       if (!matches) return [];
 
-      // Filter matches not fully confirmed and where user hasn't confirmed yet
       const pending = matches.filter((m) => {
         const confirmed = m.confirmed_by || [];
         return confirmed.length < 4 && !confirmed.includes(user!.id);
@@ -68,19 +69,18 @@ const Home = () => {
 
       if (pending.length === 0) return [];
 
-      // Fetch player names for these matches
       const playerIds = new Set<string>();
       pending.forEach((m) => {
         [m.player1_id, m.player2_id, m.player3_id, m.player4_id].forEach((id) => playerIds.add(id));
       });
 
-      const { data: profiles } = await supabase
+      const { data: playerProfiles } = await supabase  // ✅ renomeado para evitar conflito
         .from("profiles")
         .select("user_id, full_name, username")
         .in("user_id", Array.from(playerIds));
 
       const nameMap: Record<string, string> = {};
-      profiles?.forEach((p) => {
+      playerProfiles?.forEach((p) => {  // ✅
         nameMap[p.user_id] = p.user_id === user!.id ? "Tu" : (p.full_name?.split(" ")[0] || p.username || "Jogador");
       });
 
@@ -88,12 +88,12 @@ const Home = () => {
     },
   });
 
-  const displayName = profile?.full_name?.split(" ")[0] || profile?.username || "Jogador";
+  const displayName = profile?.full_name?.split(" ")[0] || profile?.username || "Jogador";  // ✅
 
   return (
     <div className="min-h-screen pb-24 animate-fade-in">
       <div className="px-6 pt-12 pb-6 flex items-center gap-3">
-        <AvatarDisplay avatarUrl={profile?.avatar_url} name={displayName} size="md" />
+        <AvatarDisplay avatarUrl={profile?.avatar_url} name={displayName} size="md" />  {/* ✅ */}
         <div className="flex-1">
           <p className="text-muted-foreground text-sm">Olá,</p>
           <h1 className="text-2xl font-bold">{displayName}</h1>
@@ -116,12 +116,11 @@ const Home = () => {
           </div>
           <div className="mt-4 flex items-center gap-2 text-sm">
             <TrendingUp size={16} className="text-success" />
-            <span className="text-success font-medium">{profile?.total_points ?? 0} pontos totais</span>
+            <span className="text-success font-medium">{profile?.total_points ?? 0} pontos totais</span>  {/* ✅ */}
           </div>
         </div>
       </div>
 
-      {/* Pending confirmations */}
       {pendingMatches && pendingMatches.length > 0 && (
         <div className="px-6 mb-6">
           <h2 className="font-bold text-base mb-3">A aguardar confirmação</h2>
@@ -161,7 +160,7 @@ const Home = () => {
         <div className="glass-card divide-y divide-border/50">
           {rankingData && rankingData.length > 0 ? (
             rankingData.map((entry: any, idx: number) => {
-              const isCurrentUser = entry.profiles?.user_id === profiles?.id;
+              const isCurrentUser = entry.profiles?.user_id === profile?.id;  // ✅
               const name = isCurrentUser
                 ? "Tu"
                 : entry.profiles?.full_name?.split(" ")[0] || entry.profiles?.username || "Jogador";
