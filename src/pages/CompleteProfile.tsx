@@ -55,7 +55,6 @@ const CompleteProfile = () => {
 
     let avatarUrl: string | null = null;
 
-    // Upload avatar if selected
     if (avatarFile) {
       const ext = avatarFile.name.split(".").pop();
       const path = `${user.id}/avatar.${ext}`;
@@ -82,7 +81,7 @@ const CompleteProfile = () => {
         preferred_side: side,
         ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
       })
-      .eq("user_id", user.id);
+      .eq("id", user.id); // ✅ corrigido de "user_id" para "id"
 
     if (error) {
       setLoading(false);

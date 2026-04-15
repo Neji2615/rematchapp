@@ -113,8 +113,8 @@ const Profile = () => {
   };
 
   const { data: matchStats } = useQuery({
-    queryKey: ["match-stats", user?.id],
-    enabled: !!user?.id,
+    queryKey: ["match-stats", profiles?.id],
+    enabled: !!profiles?.id,
     queryFn: async () => {
       const { data: matches } = await supabase
         .from("matches")

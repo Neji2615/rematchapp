@@ -49,8 +49,8 @@ const Home = () => {
 
   // Pending match confirmations
   const { data: pendingMatches } = useQuery({
-    queryKey: ["pending-confirmations", user?.id],
-    enabled: !!user?.id,
+    queryKey: ["pending-confirmations", profiles?.id],
+    enabled: !!profiles?.id,
     queryFn: async () => {
       const { data: matches } = await supabase
         .from("matches")
@@ -161,7 +161,7 @@ const Home = () => {
         <div className="glass-card divide-y divide-border/50">
           {rankingData && rankingData.length > 0 ? (
             rankingData.map((entry: any, idx: number) => {
-              const isCurrentUser = entry.profiles?.user_id === user?.id;
+              const isCurrentUser = entry.profiles?.user_id === profiles?.id;
               const name = isCurrentUser
                 ? "Tu"
                 : entry.profiles?.full_name?.split(" ")[0] || entry.profiles?.username || "Jogador";
